@@ -1,0 +1,77 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+//第三人称相机
+public class thirdPersonCam : MonoBehaviour {
+    
+    public Transform Target;
+    public float camMoveSpeed;
+    public Vector3 deltaPos;
+    public Vector3 targetPos;
+    public Vector3 camPos;
+    private Vector3 offsetPos;
+	// Use this for initialization
+	void Start () {
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+
+        Vector3 cam = Target.TransformDirection(camPos);
+        transform.position = Target.position + cam;
+
+        targetPos = Target.position + deltaPos;
+        offsetPos = transform.position - targetPos;
+	}
+	
+	// Update is called once per frame
+	void Update () {
+        transform.LookAt(Target.position + deltaPos);  
+
+ //镜头旋转       
+        if (Input.GetKeyDown(KeyCode.LeftAlt))
+        {
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+        }
+        if (Input.GetKeyUp(KeyCode.LeftAlt))
+        {
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
+        }
+        targetPos = Target.position + deltaPos;      
+        transform.position = offsetPos + targetPos;
+
+        rotate();
+        changeCamPos();
+
+	}
+    void rotate()
+    {
+        if (Input.GetMouseButton(0))
+        {
+            float moveX = Input.GetAxis("Mouse X");
+            float moveY = Input.GetAxis("Mouse Y");
+            transform.RotateAround(Target.position, Target.up, moveX * camMoveSpeed);
+            transform.RotateAround(Target.position, transform.right, -moveY * 3);
+            Vector3 originalPos = transform.position; 
+            Quaternion originalRotation = transform.rotation;
+            float x = transform.eulerAngles.x;//限制角度
+            x = Mathf.Clamp(x,10,80);
+            transform.eulerAngles = new Vector3(x,transform.eulerAngles.y,transform.eulerAngles.z);
+            if (10 < x || x < 80)
+            {
+                transform.position = originalPos;
+                transform.rotation = originalRotation;
+            }
+        }
+        offsetPos = transform.position - targetPos;
+    }
+
+    void changeCamPos()
+    {
+        //鼠标滚轮拉近拉远
+       float distance = Input.GetAxis("Mouse ScrollWheel") * 5;
+       Vector3 distancePos = distance * (targetPos - transform.position).normalized;
+       transform.position += distancePos;
+       offsetPos = transform.position - targetPos;
+    }  
+}
